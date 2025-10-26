@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenwriting Flashcards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #581c87 50%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: #d8b4fe;
+        }
+
+        .header .author {
+            font-size: 0.9rem;
+            color: #c084fc;
+            margin-top: 5px;
+        }
+
+        .sync-status {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sync-status-text {
+            color: white;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-status.syncing {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .sync-status.success {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.4);
+        }
+
+        .sync-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .sync-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sync {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sync:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            margin-bottom: 30px;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #f3e8ff;
+            color: #7c3aed;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .card-counter {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .card-content {
+            text-align: center;
+            font-size: 1.5rem;
+            line-height: 1.8;
+            color: #1f2937;
+            white-space: pre-line;
+            max-width: 700px;
+        }
+
+        .card-hint {
+            margin-top: 40px;
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-nav {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-flip {
+            background: #7c3aed;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-flip:hover {
+            background: #6d28d9;
+        }
+
+        .management-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-add {
+            background: #16a34a;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-add:hover {
+            background: #15803d;
+        }
+
+        .btn-edit {
+            background: #2563eb;
+            color: white;
+            padding: 15px 25px;
+        }
+
+        .btn-edit:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-delete {
+            background: #dc2626;
+            color: white;
+            padding: 15px 25px;
+        }
+
+        .btn-delete:hover {
+            background: #b91c1c;
+        }
+
+        .btn-settings {
+            background: #64748b;
+            color: white;
+            padding: 15px 25px;
+        }
+
+        .btn-settings:hover {
+            background: #475569;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .form-container h3 {
+            font-size: 1.5rem;
+            color: #1f2937;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-save {
+            background: #7c3aed;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-save:hover {
+            background: #6d28d9;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 15px 30px;
+        }
+
+        .btn-cancel:hover {
+            background: #d1d5db;
+        }
+
+        .tip {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+            color: #d8b4fe;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .info-text a {
+            color: #7c3aed;
+            text-decoration: none;
+        }
+
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+
+        .help-box {
+            background: #f3f4f6;
+            border-left: 4px solid #7c3aed;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+
+        .help-box strong {
+            color: #7c3aed;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card-content {
+                font-size: 1.2rem;
+            }
+
+            button span.btn-text {
+                display: none;
+            }
+
+            .sync-status {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧬 Month 1 - The Story</h1>
+            <div class="subtitle">Structure, Story DNA, Mindset</div>
+            <div class="author">Save the Cat & War of Art</div>
+        </div>
+
+        <!-- Sync Status -->
+        <div id="syncStatus" class="sync-status">
+            <div class="sync-status-text">
+                <span id="syncIcon">⚙️</span>
+                <span id="syncText">Not configured</span>
+            </div>
+            <div class="sync-actions">
+                <button class="btn-sync" onclick="showSettings()">⚙️ Settings</button>
+                <button class="btn-sync" onclick="manualSync()" id="syncButton">🔄 Sync Now</button>
+            </div>
+        </div>
+
+        <!-- Settings Form -->
+        <div id="settingsContainer" class="form-container hidden">
+            <h3>⚙️ GitHub Sync Settings</h3>
+            <div class="form-group">
+                <label for="githubUsername">GitHub Username</label>
+                <input type="text" id="githubUsername" placeholder="your-username">
+            </div>
+            <div class="form-group">
+                <label for="githubRepo">Repository Name</label>
+                <input type="text" id="githubRepo" placeholder="flashcards">
+            </div>
+            <div class="form-group">
+                <label for="githubToken">Personal Access Token</label>
+                <input type="text" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+                <div class="info-text">
+                    Need a token? <a href="https://github.com/settings/tokens/new" target="_blank">Create one here</a>
+                </div>
+                <div class="help-box">
+                    <strong>Required permissions:</strong> Check "repo" (Full control of private repositories)
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="githubBranch">Branch (optional)</label>
+                <input type="text" id="githubBranch" placeholder="main">
+                <div class="info-text">Leave empty to use default branch (usually "main")</div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-save" onclick="saveSettings()">
+                    <span>💾</span>
+                    <span>Save Settings</span>
+                </button>
+                <button class="btn-cancel" onclick="cancelSettings()">
+                    <span>✖</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Card Form -->
+        <div id="formContainer" class="form-container hidden">
+            <h3 id="formTitle">➕ Add New Card</h3>
+            <div class="form-group">
+                <label for="questionInput">Question</label>
+                <textarea id="questionInput" rows="3" placeholder="Enter your question..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="answerInput">Answer</label>
+                <textarea id="answerInput" rows="6" placeholder="Enter the answer..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-save" onclick="saveCard()">
+                    <span>💾</span>
+                    <span id="saveButtonText">Add Card</span>
+                </button>
+                <button class="btn-cancel" onclick="cancelForm()">
+                    <span>✖</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Flashcard Display -->
+        <div id="cardDisplay">
+            <div class="card" onclick="flipCard()">
+                <div>
+                    <span class="card-badge" id="cardBadge">❓ QUESTION</span>
+                    <div class="card-counter" id="cardCounter">Card 1 of 1</div>
+                </div>
+                <div class="card-content" id="cardContent"></div>
+                <div class="card-hint">👆 Click anywhere to flip</div>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="controls">
+                <button class="btn-nav" onclick="prevCard()" id="prevBtn">
+                    <span>◀</span>
+                    <span class="btn-text">Previous</span>
+                </button>
+                <button class="btn-flip" onclick="flipCard()">
+                    <span>🔄</span>
+                    <span>Flip</span>
+                </button>
+                <button class="btn-nav" onclick="nextCard()" id="nextBtn">
+                    <span class="btn-text">Next</span>
+                    <span>▶</span>
+                </button>
+            </div>
+
+            <!-- Management Controls -->
+            <div class="management-controls">
+                <button class="btn-add" onclick="showAddForm()">
+                    <span>➕</span>
+                    <span>Add New Card</span>
+                </button>
+                <button class="btn-edit" onclick="showEditForm()">
+                    <span>✏️</span>
+                    <span class="btn-text">Edit</span>
+                </button>
+                <button class="btn-delete" onclick="deleteCard()">
+                    <span>🗑️</span>
+                    <span class="btn-text">Delete</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tip -->
+        <div class="tip">
+            💡 <strong>Tip:</strong> Configure GitHub sync in settings to keep your cards synced across all devices!
+        </div>
+    </div>
+
+    <script>
+        // Initial flashcard data
+        let flashcards = [
+            {
+                id: 1,
+                q: "What 4 basic elements must the logline satisfy?",
+                a: "1. Irony - must be ironic and emotionally involving (an itch you have to scratch).\n\n2. Compelling mental picture - a whole movie must bloom into mind.\n\n3. Audience & Cost - tone, target audience, scenes, locations, etc. the buyer has to know if they'll make a profit.\n\n4. Killer title - a great title is clever, punchy, and has to say 'what the movie is.'"
+            }
+        ];
+
+        let currentCard = 0;
+        let isFlipped = false;
+        let editingCardId = null;
+
+        // GitHub settings
+        let githubConfig = {
+            username: '',
+            repo: '',
+            token: '',
+            branch: 'main',
+            filePath: 'flashcards-data.json'
+        };
+
+        // Load settings and flashcards on startup
+        function init() {
+            loadSettings();
+            loadFlashcards();
+            displayCard();
+            updateSyncStatus('idle');
+            
+            // Auto-sync on load if configured
+            if (isGitHubConfigured()) {
+                syncFromGitHub();
+            }
+        }
+
+        // Load GitHub settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('githubConfig');
+            if (saved) {
+                githubConfig = { ...githubConfig, ...JSON.parse(saved) };
+            }
+        }
+
+        // Save GitHub settings to localStorage
+        function saveSettingsToStorage() {
+            localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
+        }
+
+        // Check if GitHub is configured
+        function isGitHubConfigured() {
+            return githubConfig.username && githubConfig.repo && githubConfig.token;
+        }
+
+        // Update sync status display
+        function updateSyncStatus(status, message) {
+            const statusDiv = document.getElementById('syncStatus');
+            const iconSpan = document.getElementById('syncIcon');
+            const textSpan = document.getElementById('syncText');
+            
+            statusDiv.className = 'sync-status';
+            
+            switch(status) {
+                case 'idle':
+                    if (isGitHubConfigured()) {
+                        iconSpan.textContent = '✅';
+                        textSpan.textContent = 'GitHub sync configured';
+                        statusDiv.classList.add('success');
+                    } else {
+                        iconSpan.textContent = '⚙️';
+                        textSpan.textContent = 'Not configured';
+                    }
+                    break;
+                case 'syncing':
+                    iconSpan.textContent = '🔄';
+                    textSpan.textContent = message || 'Syncing...';
+                    statusDiv.classList.add('syncing');
+                    break;
+                case 'success':
+                    iconSpan.textContent = '✅';
+                    textSpan.textContent = message || 'Synced successfully';
+                    statusDiv.classList.add('success');
+                    setTimeout(() => updateSyncStatus('idle'), 3000);
+                    break;
+                case 'error':
+                    iconSpan.textContent = '❌';
+                    textSpan.textContent = message || 'Sync failed';
+                    statusDiv.classList.add('error');
+                    setTimeout(() => updateSyncStatus('idle'), 5000);
+                    break;
+            }
+        }
+
+        // Show settings form
+        function showSettings() {
+            document.getElementById('githubUsername').value = githubConfig.username;
+            document.getElementById('githubRepo').value = githubConfig.repo;
+            document.getElementById('githubToken').value = githubConfig.token;
+            document.getElementById('githubBranch').value = githubConfig.branch;
+            
+            document.getElementById('settingsContainer').classList.remove('hidden');
+            document.getElementById('cardDisplay').classList.add('hidden');
+            document.getElementById('formContainer').classList.add('hidden');
+        }
+
+        // Save settings
+        function saveSettings() {
+            githubConfig.username = document.getElementById('githubUsername').value.trim();
+            githubConfig.repo = document.getElementById('githubRepo').value.trim();
+            githubConfig.token = document.getElementById('githubToken').value.trim();
+            githubConfig.branch = document.getElementById('githubBranch').value.trim() || 'main';
+            
+            if (!githubConfig.username || !githubConfig.repo || !githubConfig.token) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+            
+            saveSettingsToStorage();
+            cancelSettings();
+            updateSyncStatus('idle');
+            
+            // Initial sync after configuration
+            syncToGitHub();
+        }
+
+        // Cancel settings
+        function cancelSettings() {
+            document.getElementById('settingsContainer').classList.add('hidden');
+            document.getElementById('cardDisplay').classList.remove('hidden');
+        }
+
+        // Manual sync button
+        async function manualSync() {
+            if (!isGitHubConfigured()) {
+                alert('Please configure GitHub settings first!');
+                showSettings();
+                return;
+            }
+            
+            await syncFromGitHub();
+            await syncToGitHub();
+        }
+
+        // Get file SHA from GitHub (needed for updates)
+        async function getFileSHA() {
+            const url = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${githubConfig.filePath}?ref=${githubConfig.branch}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.sha;
+                }
+                return null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Sync TO GitHub (push local changes)
+        async function syncToGitHub() {
+            if (!isGitHubConfigured()) return;
+            
+            updateSyncStatus('syncing', 'Pushing to GitHub...');
+            
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(flashcards, null, 2))));
+            const sha = await getFileSHA();
+            
+            const url = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${githubConfig.filePath}`;
+            
+            const body = {
+                message: `Update flashcards - ${new Date().toISOString()}`,
+                content: content,
+                branch: githubConfig.branch
+            };
+            
+            if (sha) {
+                body.sha = sha;
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (response.ok) {
+                    updateSyncStatus('success', 'Pushed to GitHub ✓');
+                } else {
+                    const error = await response.json();
+                    console.error('GitHub sync error:', error);
+                    updateSyncStatus('error', 'Push failed - check console');
+                }
+            } catch (error) {
+                console.error('GitHub sync error:', error);
+                updateSyncStatus('error', 'Push failed - check console');
+            }
+        }
+
+        // Sync FROM GitHub (pull remote changes)
+        async function syncFromGitHub() {
+            if (!isGitHubConfigured()) return;
+            
+            updateSyncStatus('syncing', 'Pulling from GitHub...');
+            
+            const url = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repo}/contents/${githubConfig.filePath}?ref=${githubConfig.branch}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    const remoteFlashcards = JSON.parse(content);
+                    
+                    flashcards = remoteFlashcards;
+                    saveFlashcards();
+                    displayCard();
+                    
+                    updateSyncStatus('success', 'Pulled from GitHub ✓');
+                } else if (response.status === 404) {
+                    // File doesn't exist yet, push current data
+                    updateSyncStatus('idle');
+                    await syncToGitHub();
+                } else {
+                    updateSyncStatus('error', 'Pull failed - check console');
+                }
+            } catch (error) {
+                console.error('GitHub sync error:', error);
+                updateSyncStatus('error', 'Pull failed - check console');
+            }
+        }
+
+        // Load flashcards from localStorage
+        function loadFlashcards() {
+            const saved = localStorage.getItem('saveTheCatFlashcards');
+            if (saved) {
+                flashcards = JSON.parse(saved);
+            }
+        }
+
+        // Save flashcards to localStorage
+        function saveFlashcards() {
+            localStorage.setItem('saveTheCatFlashcards', JSON.stringify(flashcards));
+        }
+
+        // Display current card
+        function displayCard() {
+            if (flashcards.length === 0) return;
+            
+            const card = flashcards[currentCard];
+            const content = isFlipped ? card.a : card.q;
+            const badge = isFlipped ? '📖 ANSWER' : '❓ QUESTION';
+            
+            document.getElementById('cardContent').textContent = content;
+            document.getElementById('cardBadge').textContent = badge;
+            document.getElementById('cardCounter').textContent = `Card ${currentCard + 1} of ${flashcards.length}`;
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = flashcards.length <= 1;
+            document.getElementById('nextBtn').disabled = flashcards.length <= 1;
+        }
+
+        // Flip card
+        function flipCard() {
+            isFlipped = !isFlipped;
+            displayCard();
+        }
+
+        // Navigate to next card
+        function nextCard() {
+            isFlipped = false;
+            currentCard = (currentCard + 1) % flashcards.length;
+            displayCard();
+        }
+
+        // Navigate to previous card
+        function prevCard() {
+            isFlipped = false;
+            currentCard = (currentCard - 1 + flashcards.length) % flashcards.length;
+            displayCard();
+        }
+
+        // Show add form
+        function showAddForm() {
+            editingCardId = null;
+            document.getElementById('formTitle').textContent = '➕ Add New Card';
+            document.getElementById('saveButtonText').textContent = 'Add Card';
+            document.getElementById('questionInput').value = '';
+            document.getElementById('answerInput').value = '';
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('cardDisplay').classList.add('hidden');
+            document.getElementById('settingsContainer').classList.add('hidden');
+        }
+
+        // Show edit form
+        function showEditForm() {
+            const card = flashcards[currentCard];
+            editingCardId = card.id;
+            document.getElementById('formTitle').textContent = '✏️ Edit Card';
+            document.getElementById('saveButtonText').textContent = 'Save Changes';
+            document.getElementById('questionInput').value = card.q;
+            document.getElementById('answerInput').value = card.a;
+            document.getElementById('formContainer').classList.remove('hidden');
+            document.getElementById('cardDisplay').classList.add('hidden');
+            document.getElementById('settingsContainer').classList.add('hidden');
+        }
+
+        // Cancel form
+        function cancelForm() {
+            editingCardId = null;
+            document.getElementById('formContainer').classList.add('hidden');
+            document.getElementById('cardDisplay').classList.remove('hidden');
+        }
+
+        // Save card (add or edit)
+        async function saveCard() {
+            const question = document.getElementById('questionInput').value.trim();
+            const answer = document.getElementById('answerInput').value.trim();
+            
+            if (!question || !answer) {
+                alert('Please fill in both question and answer!');
+                return;
+            }
+
+            if (editingCardId) {
+                // Edit existing card
+                const index = flashcards.findIndex(card => card.id === editingCardId);
+                flashcards[index] = { ...flashcards[index], q: question, a: answer };
+            } else {
+                // Add new card
+                const newCard = {
+                    id: Date.now(),
+                    q: question,
+                    a: answer
+                };
+                flashcards.push(newCard);
+                currentCard = flashcards.length - 1;
+            }
+
+            saveFlashcards();
+            cancelForm();
+            displayCard();
+            
+            // Auto-sync to GitHub
+            if (isGitHubConfigured()) {
+                await syncToGitHub();
+            }
+        }
+
+        // Delete current card
+        async function deleteCard() {
+            if (flashcards.length === 1) {
+                alert('You need at least one flashcard!');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this card?')) {
+                flashcards.splice(currentCard, 1);
+                
+                if (currentCard >= flashcards.length) {
+                    currentCard = flashcards.length - 1;
+                }
+                
+                saveFlashcards();
+                displayCard();
+                
+                // Auto-sync to GitHub
+                if (isGitHubConfigured()) {
+                    await syncToGitHub();
+                }
+            }
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>
